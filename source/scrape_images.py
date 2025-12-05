@@ -9,20 +9,38 @@ from urllib.parse import urljoin
 from typing import List, Dict, Any
 
 # =========================
-# configuration.json 로드
+# Load configuration.json
 # =========================
 def load_config():
     config_path = os.path.join(os.getcwd(), "configuration.json")
-    if not os.path.exists(config_path):
-        print("[ERROR] configuration.json 파일이 존재하지 않습니다.")
-        sys.exit(1)
+    config = None
 
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            config = json.load(f)
-    except Exception as e:
-        print(f"[ERROR] configuration.json 읽기 실패: {e}")
-        sys.exit(1)
+    if not os.path.exists(config_path):
+        today = date.today()
+        config = {
+            "date": {
+                "year": today.year,
+                "month": today.month,
+                "day": today.day,
+            },
+            "section": "A",
+        }
+        print("[INFO] configuration.json not found. Creating file with default values.")
+
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"[WARN] Failed to create configuration.json automatically: {e}")
+            print("[WARN] Continuing with in-memory defaults despite the write failure.")
+
+    if config is None:
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"[ERROR] Failed to read configuration.json: {e}")
+            sys.exit(1)
 
     try:
         year = config["date"]["year"]
@@ -30,14 +48,14 @@ def load_config():
         day = config["date"]["day"]
         section = config["section"].upper()
     except Exception:
-        print("[ERROR] configuration.json의 구조가 올바르지 않습니다.")
+        print("[ERROR] Invalid configuration.json structure.")
         sys.exit(1)
 
     return year, month, day, section
 
 
 # =========================
-# 날짜/섹션 설정
+# Date / section settings
 # =========================
 YEAR, MONTH, DAY, SECTION = load_config()
 
@@ -60,7 +78,7 @@ DEFAULT_HEADERS = {
 }
 
 # =========================
-# 파일명 title 정리 함수
+# Sanitize file name (title) helper
 # =========================
 def sanitize_title(title: str, max_len: int = 80) -> str:
     if not title:
@@ -82,7 +100,7 @@ def sanitize_title(title: str, max_len: int = 80) -> str:
 
 
 # =========================
-# JSON 기사 정보 요청
+# Fetch article metadata JSON
 # =========================
 def fetch_paper_article_info(
     year: int,
@@ -112,13 +130,13 @@ def fetch_paper_article_info(
         for key in ("list", "articles", "data"):
             if key in data and isinstance(data[key], list):
                 return data[key]
-        raise ValueError(f"예상하지 못한 JSON 구조: {list(data.keys())}")
+        raise ValueError(f"Unexpected JSON structure: {list(data.keys())}")
     else:
-        raise ValueError(f"JSON 타입 오류: {type(data)}")
+        raise ValueError(f"Unexpected JSON type: {type(data)}")
 
 
 # =========================
-# 이미지 다운로드
+# Download article image
 # =========================
 def download_article_image(
     yc: int,
@@ -158,26 +176,26 @@ def download_article_image(
 
 
 # =========================
-# 메인
+# Main
 # =========================
 def main() -> None:
-    # 폴더 존재하면 종료
+    # Exit early when folder already exists
     if os.path.exists(SAVE_PATH):
-        print(f"[INFO] 이미 존재하는 날짜/섹션 폴더입니다: {SAVE_PATH}")
-        print("[INFO] 프로그램을 종료합니다.")
+        print(f"[INFO] Target date/section folder already exists: {SAVE_PATH}")
+        print("[INFO] Exiting program.")
         return
 
     os.makedirs(SAVE_PATH, exist_ok=False)
 
-    print(f"[INFO] 날짜: {DATE_STR}, 섹션: {SECTION}, 저장 경로: {SAVE_PATH}")
+    print(f"[INFO] Date: {DATE_STR}, Section: {SECTION}, Save path: {SAVE_PATH}")
 
     try:
         articles = fetch_paper_article_info(YEAR, MONTH, DAY, SECTION)
     except Exception as e:
-        print(f"[ERROR] 기사 목록 조회 실패: {e}")
+        print(f"[ERROR] Failed to fetch article list: {e}")
         return
 
-    print(f"[INFO] 기사 개수: {len(articles)}")
+    print(f"[INFO] Number of articles: {len(articles)}")
 
     index = 1
     for article in articles:
@@ -186,7 +204,7 @@ def main() -> None:
         title = article.get("title") or article.get("subject") or ""
 
         if not nc or not ec:
-            print(f"[SKIP] no/ec 없음 → {article}")
+            print(f"[SKIP] Missing no/ec → {article}")
             continue
 
         try:
@@ -199,7 +217,7 @@ def main() -> None:
                 save_dir=SAVE_PATH,
                 section=SECTION,
             )
-            print(f"[OK] 다운로드 성공: {safe_title}")
+            print(f"[OK] Download succeeded: {safe_title}")
             index += 1
         except Exception as e:
             print(f"[ERROR] NC={nc}, EC={ec}, TITLE={title}, {e}")
