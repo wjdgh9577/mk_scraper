@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore source/MkScraper.WinForms.csproj
+
+      - name: Publish app
+        run: dotnet publish source/MkScraper.WinForms.csproj -c Release -o publish
+
+      - name: Archive publish output
+        shell: pwsh
+        run: |
+          $zipName = "MkScraper-win.zip"
+          if (Test-Path $zipName) { Remove-Item $zipName }
+          Compress-Archive -Path publish\* -DestinationPath $zipName
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MkScraper-win.zip
+          generate_release_notes: true
