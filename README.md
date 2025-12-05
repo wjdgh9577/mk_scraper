@@ -1,88 +1,78 @@
-# MK Digital News Article Image Scraper
+# MK Digital News Article Image Scraper (WinForms)
 
-This project provides a script that **downloads every article image from the Maeil Business Newspaper digital edition** for a given publication date and section. The script queries the article list JSON API and saves each article image as a JPEG file.
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| Python / pip checks | Verifies the runtime environment automatically |
-| Auto-install `requests` | Installs the required dependency if missing |
-| Auto-create `configuration.json` | Generates defaults based on today’s date and section `A` |
-| Fetch article list JSON | Calls `/new/ajax/getPaperArticleInfo.php` |
-| Download article images | Calls `/new/loadArticle.php` per article |
-| Auto-create output folder | Saves to `./articles/YYYYMMDD_SECTION` |
+WinForms desktop app that **downloads every article image for a chosen date and section** of the Maeil Business Newspaper digital edition. The app queries MK’s public JSON endpoints, then stores each JPEG inside `articles/YYYYMMDD_SECTION`.
 
 ---
 
-## 📁 Project Structure
+## ✨ Highlights
+
+| Feature | Details |
+|---------|---------|
+| Date & section picker | Calendar control plus drop-down for editions (A, B, …) |
+| Custom output root | Pick any folder; the app builds `articles/<date>_<section>` inside it |
+| Duplicate guard | Stops immediately if the destination folder already exists |
+| Clean filenames | Strips invalid characters and caps overly long article titles |
+| Color-coded log | `[OK]`, `[WARN]`, `[ERROR]` entries streamed live while scraping |
+| Path persistence | Remembers the last output root in `%AppData%\MkScraper\settings.json` |
+
+---
+
+## 📁 Project Layout
 
 ```
-📦 project root
-├─ 📄 run.bat
-├─ 📄 configuration.json        ← auto-created on first run (if missing)
-├─ 📄 README.md
-│
-├─ 📂 source
-│  └─ 📄 scrape_images.py
-│
-└─ 📂 articles                  ← auto-created
-   └─ 📂 YYYYMMDD_SECTION       (example: 20251205_A)
-      ├─ 📄 1_TitleOne.jpg
-      ├─ 📄 2_TitleTwo.jpg
-      └─ ...
+mk_scraper/
+├─ README.md
+└─ source/
+   ├─ MkScraper.WinForms.sln
+   ├─ MkScraper.WinForms.csproj
+   ├─ Program.cs
+   ├─ MainForm.cs
+   └─ MainForm.Designer.cs
 ```
+
+Downloaded images go under the chosen root: `articles/YYYYMMDD_SECTION`. Example: `D:\Downloads\articles\20231205_A`.
 
 ---
 
-## ⚙️ How to Run
+## ⚙️ Requirements
 
-1. **Install Python**  
-   Python 3.10+ is recommended. Make sure it is added to your PATH (`Add Python to PATH` during installation).
+- Windows 10+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download) (includes the runtime and CLI tooling)
 
-2. **Start the script**  
-   Run `run.bat` (double-click or run from Command Prompt).
+---
 
-3. **Configuration file**  
-   On first launch, if `configuration.json` does not exist it will be created automatically with today’s date and section `A`. Update the file to scrape a different date or section and rerun the script.  
+## 🚀 Getting Started
 
-   ```json
-   {
-       "date": {
-           "year": 2025,
-           "month": 12,
-           "day": 5
-       },
-       "section": "A"
-   }
+1. Clone the repo and run from the root:
+
+   ```bash
+   dotnet run --project source/MkScraper.WinForms
    ```
 
----
+   Prefer Visual Studio? Open `source/MkScraper.WinForms.sln` and press `F5`.
 
-## 🔌 API Endpoints
+2. In the app:
+   - Pick the publication date (defaults to today).
+   - Choose a section from the drop-down.
+   - Browse to a download root; the app creates `articles` inside it.
+   - Hit **Download**. Images are saved as `index_title.jpg` in chronological order.
 
-### Article list (JSON)
-
-```
-https://digital.mk.co.kr/new/ajax/getPaperArticleInfo.php
-?service_type=M0&type=text&year={YYYY}&month={MM}&day={DD}&section={S}&TM=D1
-```
-
-### Article image
-
-```
-https://digital.mk.co.kr/new/loadArticle.php
-?MKC=M0&SC={S}&YC={YYYY}&MC={MM}&DC={DD}&NC={no}&EC={ec}&OC=2&PV=N
-```
-
-The `no` and `ec` values used above come from the article list JSON response.
+3. Use the log pane to track progress.  
+   `[OK]` = success, `[WARN]` = input/validation issue, `[ERROR]` = request or file failure.
 
 ---
 
-## 📌 Additional Notes
+## 🔌 MK API Usage
 
-- Each downloaded image is the cropped article image from the digital newspaper PDF.
-- Filenames follow `index_title.jpg`; characters that are invalid on Windows are removed automatically.
-- If the output folder for the date/section already exists, the script stops immediately to avoid duplicate downloads.
+- Article list: `https://digital.mk.co.kr/new/ajax/getPaperArticleInfo.php`
+- Article image: `https://digital.mk.co.kr/new/loadArticle.php`
+
+Each request passes the target date, section, and the `NC`/`EC` codes obtained from the list response.
+
+---
+
+## 📝 Notes
+
+- Failed downloads do not stop the batch; only the successful files remain.
+- If zero files are saved the app removes the empty folder automatically.
+- Any upstream API changes at MK can break scraping—check the log output if that happens.

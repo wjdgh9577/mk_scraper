@@ -1,0 +1,17 @@
+# Visual Studio build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+.vs/
+
+# User specific files
+*.user
+*.rsuser
+*.suo
+*.userprefs
+
+# Backup and cache files
+*.bak
+*.cache
+*.log
