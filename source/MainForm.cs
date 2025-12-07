@@ -1,4 +1,4 @@
-using System.Drawing;
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
@@ -54,6 +54,35 @@ public partial class MainForm : Form
         }
     }
 
+    private void btnOpenDirectory_Click(object sender, EventArgs e)
+    {
+        var target = txtOutputRoot.Text.Trim();
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            Log("[WARN] Please select a download location before opening it.");
+            return;
+        }
+
+        if (!Directory.Exists(target))
+        {
+            Log($"[WARN] Directory does not exist: {target}");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = target,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Log($"[ERROR] Failed to open directory: {ex.Message}");
+        }
+    }
+
     private async Task RunScrapeAsync()
     {
         btnDownload.Enabled = false;
@@ -78,20 +107,9 @@ public partial class MainForm : Form
 
             SaveOutputRoot(userRoot);
 
-            string baseDir;
-            try
-            {
-                baseDir = EnsureArticlesRoot(userRoot);
-            }
-            catch (Exception ex)
-            {
-                Log($"[ERROR] Failed to prepare download folder: {ex.Message}");
-                return;
-            }
-
             var dateStr = targetDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             var folderName = $"{dateStr}_{section}";
-            var destinationDir = Path.Combine(baseDir, folderName);
+            var destinationDir = Path.Combine(userRoot, folderName);
 
             if (Directory.Exists(destinationDir))
             {
@@ -317,13 +335,6 @@ public partial class MainForm : Form
             $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
     }
 
-    private static string EnsureArticlesRoot(string userRoot)
-    {
-        var articlesRoot = Path.Combine(userRoot, "articles");
-        Directory.CreateDirectory(articlesRoot);
-        return articlesRoot;
-    }
-
     private static string GetDefaultOutputRoot()
     {
         var executableDir = AppContext.BaseDirectory;
@@ -418,7 +429,7 @@ public partial class MainForm : Form
 
         if (message.Contains("[WARN]", StringComparison.OrdinalIgnoreCase))
         {
-            return Color.Yellow;
+            return Color.Black;
         }
 
         if (message.Contains("[OK]", StringComparison.OrdinalIgnoreCase))

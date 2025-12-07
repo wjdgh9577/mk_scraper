@@ -34,6 +34,7 @@ partial class MainForm
         txtLog = new RichTextBox();
         lblOutputRoot = new Label();
         txtOutputRoot = new TextBox();
+        btnOpenDirectory = new Button();
         btnBrowse = new Button();
         SuspendLayout();
         // 
@@ -110,8 +111,19 @@ partial class MainForm
         txtOutputRoot.Location = new Point(20, 73);
         txtOutputRoot.Name = "txtOutputRoot";
         txtOutputRoot.PlaceholderText = "Choose folder...";
-        txtOutputRoot.Size = new Size(440, 23);
+        txtOutputRoot.Size = new Size(330, 23);
         txtOutputRoot.TabIndex = 6;
+        // 
+        // btnOpenDirectory
+        // 
+        btnOpenDirectory.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnOpenDirectory.Location = new Point(360, 72);
+        btnOpenDirectory.Name = "btnOpenDirectory";
+        btnOpenDirectory.Size = new Size(110, 25);
+        btnOpenDirectory.TabIndex = 7;
+        btnOpenDirectory.Text = "Open Directory";
+        btnOpenDirectory.UseVisualStyleBackColor = true;
+        btnOpenDirectory.Click += btnOpenDirectory_Click;
         // 
         // btnBrowse
         // 
@@ -119,7 +131,7 @@ partial class MainForm
         btnBrowse.Location = new Point(480, 72);
         btnBrowse.Name = "btnBrowse";
         btnBrowse.Size = new Size(110, 25);
-        btnBrowse.TabIndex = 7;
+        btnBrowse.TabIndex = 8;
         btnBrowse.Text = "Browse…";
         btnBrowse.UseVisualStyleBackColor = true;
         btnBrowse.Click += btnBrowse_Click;
@@ -129,6 +141,7 @@ partial class MainForm
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(614, 381);
+        Controls.Add(btnOpenDirectory);
         Controls.Add(btnBrowse);
         Controls.Add(txtOutputRoot);
         Controls.Add(lblOutputRoot);
@@ -158,4 +171,5 @@ partial class MainForm
     private Label lblOutputRoot = null!;
     private TextBox txtOutputRoot = null!;
     private Button btnBrowse = null!;
+    private Button btnOpenDirectory = null!;
 }
